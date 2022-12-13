@@ -1,0 +1,15 @@
+api = "0.9"
+
+[buildpack]
+id = "fagiani/run"
+version = "0.1.0"
+name = "Run Buildpack"
+homepage = "https://github.com/fagiani/heroku-buildpack-run"
+description = "Runs bash commands during the build"
+keywords = ["run", "bash", "commands", "build"]
+
+[[buildpack.licenses]]
+type = "MIT"
+
+[[stacks]]
+id = "*"

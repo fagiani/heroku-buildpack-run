@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-#
-# The 'compile' script is executed by the slug compiler with three arguments:
-#
-# - $1: build_dir, location of your app directory on the build dyno
-# - $2: cache_dir, directory on the build dyno that persists between builds
-# - $3: env_dir, directory holding all the app's config vars as files
-#
-# More information here: https://devcenter.heroku.com/articles/buildpack-api
-#------------------------------------------------------------------------------#
 
 # Indentation
 indent()     { sed 's/^/       /'; }
@@ -16,11 +7,7 @@ indent-err() { sed "s/^/$(printf '\033')[31m       /;s/$/$(printf '\033')[0m/"; 
 arrow-err()  { sed "s/^/$(printf '\033')[31m-----> /;s/$/$(printf '\033')[0m/"; }
 
 # Default enviroment variables
-export BUILD_DIR=$1
-export CACHE_DIR=$2
-export ENV_DIR=$3
-
-cd "$BUILD_DIR"
+env_dir="$2/env"
 
 # If BUILDPACK_RUN_LOAD_CONFIG is set, create env vars for all of the app's
 # config vars (except thos specified in BUILDPACK_RUN_LOAD_CONFIG_SKIP). The
@@ -29,15 +16,15 @@ cd "$BUILD_DIR"
 # are executed (this is to prevent name clashes between the config vars and
 # env vars used by this script).
 BUILDPACK_RUN_CONFIG_FILE=$(mktemp)
-if [[ -f "$ENV_DIR/BUILDPACK_RUN_LOAD_CONFIG" ]]; then
+if [[ -f "$env_dir/BUILDPACK_RUN_LOAD_CONFIG" ]]; then
   echo "Loading config vars into environment" | arrow
   skip='^()$'
-  if [[ -f "$ENV_DIR/BUILDPACK_RUN_LOAD_CONFIG_SKIP" ]]; then
-    skip="^($(tr ':' '|' <"$ENV_DIR/BUILDPACK_RUN_LOAD_CONFIG_SKIP"))$"
-    echo "(except: $(cat "$ENV_DIR/BUILDPACK_RUN_LOAD_CONFIG_SKIP"))" | indent
+  if [[ -f "$env_dir/BUILDPACK_RUN_LOAD_CONFIG_SKIP" ]]; then
+    skip="^($(tr ':' '|' <"$env_dir/BUILDPACK_RUN_LOAD_CONFIG_SKIP"))$"
+    echo "(except: $(cat "$env_dir/BUILDPACK_RUN_LOAD_CONFIG_SKIP"))" | indent
   fi
   shopt -s nullglob
-  for f in "$ENV_DIR"/*; do
+  for f in "$env_dir"/*; do
     if ! grep -qE "$skip" <<<$(basename "$f"); then
       echo "export $(basename "$f")=\$(cat "$f")" >>"$BUILDPACK_RUN_CONFIG_FILE"
     fi
@@ -45,8 +32,8 @@ if [[ -f "$ENV_DIR/BUILDPACK_RUN_LOAD_CONFIG" ]]; then
 fi
 
 # Extract commands from BUILDPACK_RUN config var
-if [[ -f "$ENV_DIR/BUILDPACK_RUN" ]]; then
-  BUILDPACK_RUN_COMMANDS=$(cat "$ENV_DIR/BUILDPACK_RUN")
+if [[ -f "$env_dir/BUILDPACK_RUN" ]]; then
+  BUILDPACK_RUN_COMMANDS=$(cat "$env_dir/BUILDPACK_RUN")
 elif [[ -f buildpack-run.sh ]]; then
   BUILDPACK_RUN_COMMANDS=./buildpack-run.sh
 else
@@ -55,7 +42,7 @@ else
 You must either create an executable script named buildpack-run.sh
 in the root directory of your app, or specify one or more commands
 to execute in the BUILDPACK_RUN config variable (colon-delimited).
-See https://github.com/weibeld/heroku-buildpack-run#usage
+See https://github.com/fagiani/heroku-buildpack-run#usage
 EOF
   exit 1
 fi
