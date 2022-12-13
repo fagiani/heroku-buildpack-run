@@ -1,8 +1,8 @@
-api = "0.9"
+api = "0.8"
 
 [buildpack]
 id = "fagiani/run"
-version = "0.1.0"
+version = "0.1.1"
 name = "Run Buildpack"
 homepage = "https://github.com/fagiani/heroku-buildpack-run"
 description = "Runs bash commands during the build"
